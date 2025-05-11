@@ -713,6 +713,15 @@ document.addEventListener('mousedown', function(event) {
     mouseOffsetX = heldShape.position.x - event.clientX;
 });
 
+document.addEventListener('touchstart', function(event) {
+    event.preventDefault();
+    isHolding = true;
+
+    const touch = event.touches[0];
+    initialMouseX = touch.clientX;
+    mouseOffsetX = heldShape.position.x - touch.clientX;
+});
+
 document.addEventListener('mousemove', function(event) {
     if (isHolding && heldShape && !isPaused) {
         // 
