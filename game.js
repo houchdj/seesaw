@@ -712,6 +712,7 @@ document.addEventListener('mousedown', function(event) {
     initialMouseX = event.clientX;
     mouseOffsetX = heldShape.position.x - event.clientX;
 });
+
 document.addEventListener('mousemove', function(event) {
     if (isHolding && heldShape && !isPaused) {
         // 
@@ -721,6 +722,25 @@ document.addEventListener('mousemove', function(event) {
             x: newX,
             y: heldShape.position.y
         }); 
+        // Move the guide line to follow the held shape
+        Matter.Body.setPosition(guideLine, {
+            x: heldShape.position.x,
+            y: guideLine.position.y
+        });
+    }
+});
+
+document.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+    if (isHolding && heldShape && !isPaused) {
+        const touch = event.touches[0];
+        const newX = touch.clientX;
+        // Move existing shape to follow touch x position
+        Matter.Body.setPosition(heldShape, {
+            x: newX,
+            y: heldShape.position.y
+        });
+
         // Move the guide line to follow the held shape
         Matter.Body.setPosition(guideLine, {
             x: heldShape.position.x,
