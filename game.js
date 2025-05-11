@@ -90,8 +90,8 @@ pauseButton.addEventListener('mouseover', () => {
   pauseButton.addEventListener('touchend', (event) => {
     event.preventDefault();
     pauseButton.style.opacity = '1';
-    togglePause();
     if (isPaused && lives > 0) {
+      togglePause();
       subText.innerHTML = 'tap to resume';
     }
   });
