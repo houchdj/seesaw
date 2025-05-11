@@ -17,6 +17,11 @@ let isPaused = false;
 let mouseOffsetX = 0;
 let initialMouseX = 0;
 
+// touch controls
+let touchStartX = 0;
+let hasMoved = false;
+const MOVE_THRESHOLD = 5;
+
 // top bar
 let topBar = document.createElement('div');
 topBar.style.position = 'absolute';
@@ -716,8 +721,10 @@ document.addEventListener('mousedown', function(event) {
 document.addEventListener('touchstart', function(event) {
     event.preventDefault();
     isHolding = true;
+    hasMoved = false;
 
     const touch = event.touches[0];
+    touchStartX = touch.clientX;
     initialMouseX = touch.clientX;
     mouseOffsetX = heldShape.position.x - touch.clientX;
 });
@@ -743,7 +750,13 @@ document.addEventListener('touchmove', function(event) {
     event.preventDefault();
     if (isHolding && heldShape && !isPaused) {
         const touch = event.touches[0];
-        const newX = touch.clientX;
+        const newX = touch.clientX + mouseOffsetX;
+
+        // Check if the touch has moved enough to register as a drag
+        if (Math.abs(touch.clientX - touchStartX) > MOVE_THRESHOLD) {
+            hasMoved = true;
+        }
+
         // Move existing shape to follow touch x position
         Matter.Body.setPosition(heldShape, {
             x: newX,
@@ -760,6 +773,23 @@ document.addEventListener('touchmove', function(event) {
 
 document.addEventListener('mouseup', function(event) {
     isHolding = false;
+});
+
+document.addEventListener('touchend', function(event) {
+    event.preventDefault();
+    isHolding = false;
+    
+    // If we haven't moved significantly, drop the piece!
+    if (!hasMoved && dropInput && heldShape && !isPaused) {
+        Matter.Body.setStatic(heldShape, false);
+        heldShape.collisionFilter.category = NORMAL_CATEGORY;
+        heldShape.collisionFilter.mask = 0xFFFF;
+        heldShape = null;
+        
+        // Create a new shape
+        getNewPiece();
+        timer = 4; // Reset timer
+    }
 });
 
 document.addEventListener('keydown', function(event) {
