@@ -77,9 +77,25 @@ pauseButton.addEventListener('mouseover', () => {
   pauseButton.addEventListener('click', () => {
     togglePause();
     if (isPaused && lives > 0) {
-      subText.innerHTML = 'press p or enter to resume';
+      subText.innerHTML = 'tap to resume';
     }
   });
+
+  // Add touch event to toggle pause
+  pauseButton.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    pauseButton.style.opacity = '0.8';
+  });
+
+  pauseButton.addEventListener('touchend', (event) => {
+    event.preventDefault();
+    pauseButton.style.opacity = '1';
+    togglePause();
+    if (isPaused && lives > 0) {
+      subText.innerHTML = 'tap to resume';
+    }
+  });
+  
 // Add to document
 document.body.appendChild(pauseButton);
 
@@ -713,7 +729,10 @@ Matter.Events.on(render, 'afterRender', function() {
 // event listener for spacebar
 document.addEventListener('mousedown', function(event) {
     isHolding = true;
+    hasMoved = false;
 
+    // set the initial mouse position
+    mouseStartX = event.clientX;
     initialMouseX = event.clientX;
     mouseOffsetX = heldShape.position.x - event.clientX;
 });
@@ -731,8 +750,12 @@ document.addEventListener('touchstart', function(event) {
 
 document.addEventListener('mousemove', function(event) {
     if (isHolding && heldShape && !isPaused) {
-        // 
         const newX = event.clientX + mouseOffsetX;
+
+        // check if the mouse has moved enough to register as a drag
+        if (Math.abs(event.clientX - mouseStartX) > MOVE_THRESHOLD) {
+            hasMoved = true;
+        }
         // Move existing shape to follow mouse x position
         Matter.Body.setPosition(heldShape, {
             x: newX,
@@ -773,6 +796,23 @@ document.addEventListener('touchmove', function(event) {
 
 document.addEventListener('mouseup', function(event) {
     isHolding = false;
+
+    // If we haven't moved significantly, drop the piece!
+    if (!hasMoved && dropInput && heldShape && !isPaused) {
+        Matter.Body.setStatic(heldShape, false);
+        heldShape.collisionFilter.category = NORMAL_CATEGORY;
+        heldShape.collisionFilter.mask = 0xFFFF;
+        heldShape = null;
+
+        // Create a new shape
+        getNewPiece();
+        timer = 4; // Reset timer
+    }
+
+    // if paused, unpause the game
+    if (isPaused) {
+        togglePause();
+    }
 });
 
 document.addEventListener('touchend', function(event) {
@@ -789,6 +829,11 @@ document.addEventListener('touchend', function(event) {
         // Create a new shape
         getNewPiece();
         timer = 4; // Reset timer
+    }
+
+    // if paused, unpause the game
+    if (isPaused) {
+        togglePause();
     }
 });
 
@@ -827,7 +872,7 @@ document.addEventListener('keydown', function(event) {
     if (event.code === 'KeyP') {
         togglePause();
         if (isPaused && lives > 0) {
-        subText.innerHTML = 'press p or enter to resume';
+        subText.innerHTML = 'tap to resume';
         }
     }
 
@@ -838,7 +883,7 @@ document.addEventListener('keydown', function(event) {
             // Pause the game
             togglePause();
             if (isPaused && lives > 0) {
-                subText.innerHTML = 'press p or enter to resume';
+                subText.innerHTML = 'tap to resume';
                 }
         }
     }
